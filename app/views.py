@@ -1,6 +1,10 @@
 from app import app
 from flask import render_template, request, redirect, url_for, flash
 
+from .forms import ContactForm
+from app import mail
+from flask_mail import Message
+
 
 ###
 # Routing for your application.
@@ -16,6 +20,55 @@ def home():
 def about():
     """Render the website's about page."""
     return render_template('about.html', name="Mary Jane")
+
+
+@app.route('/contact', methods=['GET', 'POST'])
+def contact():
+    myform = ContactForm()
+    if request.method == 'POST':
+    
+        if myform.validate_on_submit():
+            # Perform actions with form data, like sending an email
+            # For example:
+            # send_email(form.name.data, form.email.data, form.subject.data, form.message.data)
+            name = myform.name.data
+            email = myform.email.data
+            subject = myform.subject.data
+            message = myform.message.data
+
+            flash('You have successfully filled out the form', 'success')
+            msg = Message(subject,
+                          sender=("Sender Name", "from@example.com"),
+                          recipients=["to@example.com"])  
+            msg.body = f"From: {name} <{email}>\n\n{message}"
+            mail.send(msg)
+            return redirect(url_for('home'))
+
+        flash_errors(myform)
+    return render_template('contact.html', form=myform)
+
+@app.route('/wtform', methods=['GET', 'POST'])
+def wtform():
+    myform = MyForm()
+
+    if request.method == 'POST':
+        if myform.validate_on_submit():
+            # Note the difference when retrieving form data using Flask-WTF
+            # Here we use myform.firstname.data instead of request.form['firstname']
+            firstname = myform.firstname.data
+            lastname = myform.lastname.data
+            email = myform.email.data
+            message = myform.message.data
+
+            flash('You have successfully filled out the form', 'success')
+            return render_template('result.html',
+                                   firstname=firstname,
+                                   lastname=lastname,
+                                   email=email,
+                                   message=message)
+
+        flash_errors(myform)
+    return render_template('wtform.html', form=myform)
 
 
 ###
